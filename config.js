@@ -2,6 +2,7 @@
 var defaultConfig = {
   NPM_PATH       : process.env.HOME + '/.npm',
   REGISTRY_NAME  : 'registry.npmjs.org',
+  LOCAL_REGISTRY : 'http://localhost:8234',
   PORT: 8234,
   ENABLE_NPM_FAILOVER: true,
   STRICT: false
