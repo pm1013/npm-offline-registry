@@ -16,6 +16,12 @@ var readFile = utils.readFile;
 
 var app = express();
 app.use( function(req, res, next ){
+  // Simple hack to deal with encoded / characters used by npm
+  if (req.url.indexOf("%2f") !== -1) {
+    req.url = req.url.replace("%2f", "/");
+    console.log("Rewrote URL", req.url);
+  }
+
   res._log = {
     method: req.method,
     path: req.path,
