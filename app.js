@@ -51,7 +51,7 @@ app.get( '/:package', function( req, res, next ){
     })
     .then( function( cachedData ){
       cachedData = JSON.parse( cachedData );
-      patchData( cachedData );
+      patchData( REGISTRY_NAME, packageName, cachedData );
       return res.send( cachedData );
     })
     .catch( next );
@@ -101,9 +101,10 @@ app.get( '/:scope/:package/-/:tarball', function( req, res, next ){
   // Silently gather package.json if we don't already have it
   fileExists( cacheFile )
     .tap( function( isExists ){
+      var scopedPackageName = scopeName + "%2f" + packageName;
       if( !isExists ){
         if ( ENABLE_NPM_FAILOVER ) {
-          fetchAndCacheMetadata( packageName, cacheFile );
+          fetchAndCacheMetadata( scopedPackageName, cacheFile );
         }
       }
     });

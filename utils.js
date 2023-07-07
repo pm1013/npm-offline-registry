@@ -27,12 +27,12 @@ var readFile = Promise.promisify( fs.readFile );
 exports.readFile = readFile;
 
 
-exports.patchData = function ( data ){
+exports.patchData = function ( registryName, packageName, data ){
   /* Get the list of versions which is available in local cache */
   var cacheJsonFile, cacheJsonFileData = [];
 
   if( config.STRICT ){
-      cacheJsonFile = path.join( NPM_PATH, data.name );
+      cacheJsonFile = path.join( NPM_PATH, registryName, packageName );
       cacheJsonFileData = fs.existsSync( cacheJsonFile ) ? fs.readdirSync( cacheJsonFile ) : [];
   }
 
