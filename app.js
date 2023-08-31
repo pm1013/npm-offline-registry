@@ -15,6 +15,10 @@ var readFile = utils.readFile;
 
 var app = express();
 app.use( function(req, res, next ){
+  if (req.url.indexOf("%2f") !== -1) {
+    req.url = req.url.replace("%2f", "/");
+  }
+
   res._log = {
     method: req.method,
     path: req.path,
@@ -36,13 +40,13 @@ app.get( '/:package', function( req, res, next ){
 
   return fileExists( cacheFile )
     .tap( function( isExists ){
-      if( !isExists ){
-        if ( !ENABLE_NPM_FAILOVER ) {
-          res._log.cacheHit = '!!!';
-          return Promise.reject( { status: 404 });
-        }
+      if ( ENABLE_NPM_FAILOVER ) {
         res._log.cacheHit = '---';
         return fetchAndCacheMetadata( packageName, cacheFile );
+      }
+      if( !isExists ){
+        res._log.cacheHit = '!!!';
+        return Promise.reject( { status: 404 });
       }
     })
     .then( function( ){
@@ -91,6 +95,34 @@ app.get( '/:package/-/:tarball', function( req, res, next ){
     .catch( next );
 });
 
+app.get( '/:scope/:package', function( req, res, next ){
+  var scopeName = req.params.scope;
+  var packageName = req.params.package;
+  var cacheFile = [ NPM_PATH, REGISTRY_NAME, scopeName, packageName, '.cache.json' ].join( '/' );
+
+  return fileExists( cacheFile )
+    .tap( function( isExists ){
+      if ( ENABLE_NPM_FAILOVER ) {
+        res._log.cacheHit = '---';
+        return fetchAndCacheMetadata( packageName, cacheFile, scopeName );
+      }
+      if( !isExists ){
+        res._log.cacheHit = '!!!';
+        return Promise.reject( { status: 404 });
+      }
+    })
+    .then( function( ){
+      res._log.cacheFile = cacheFile;
+      return readFile( cacheFile, 'utf-8' );
+    })
+    .then( function( cachedData ){
+      cachedData = JSON.parse( cachedData );
+      patchData( REGISTRY_NAME, packageName, cachedData );
+      return res.send( cachedData );
+    })
+    .catch( next );
+});
+
 app.get( '/:scope/:package/-/:tarball', function( req, res, next ){
   var scopeName = req.params.scope;
   var packageName = req.params.package;
@@ -101,10 +133,9 @@ app.get( '/:scope/:package/-/:tarball', function( req, res, next ){
   // Silently gather package.json if we don't already have it
   fileExists( cacheFile )
     .tap( function( isExists ){
-      var scopedPackageName = scopeName + "%2f" + packageName;
       if( !isExists ){
         if ( ENABLE_NPM_FAILOVER ) {
-          fetchAndCacheMetadata( scopedPackageName, cacheFile );
+          fetchAndCacheMetadata( packageName, cacheFile, scopeName );
         }
       }
     });

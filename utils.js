@@ -74,9 +74,13 @@ function encodePackageName( packageName ){
   return encodeURIComponent(packageName).replace(/^%40/, '@');
 }
 
-exports.fetchAndCacheMetadata = function ( packageName, cacheFile ){
+exports.fetchAndCacheMetadata = function ( packageName, cacheFile, scopeName ){
   var packageCacheDir = path.dirname( cacheFile );
   packageName = encodePackageName( packageName );
+  if (scopeName) {
+    packageName = scopeName + '%2f' + packageName;
+  }
+
   return exec( fetchAndCacheMetadataCmd, {
     packageCacheDir: packageCacheDir,
     REGISTRY_NAME: REGISTRY_NAME,
@@ -90,7 +94,7 @@ exports.fetchAndCacheTarball = function ( packageName, version, tarballPath, sco
   
   var tarballUrl = 'http://' + REGISTRY_NAME + '/' + packageName + '/-/' + packageName + '-' + version + '.tgz';
   if (scopeName) {
-    tarballUrl = 'http://' + REGISTRY_NAME + '/' + scopeName + '/' + packageName + '/-/' + packageName + '-' + version + '.tgz';
+    tarballUrl = 'http://' + REGISTRY_NAME + '/' + scopeName + '%2f' + packageName + '/-/' + packageName + '-' + version + '.tgz';
   }
   var packageTarballDir = path.dirname( tarballPath );
 
