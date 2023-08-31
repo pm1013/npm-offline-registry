@@ -36,13 +36,13 @@ app.get( '/:package', function( req, res, next ){
 
   return fileExists( cacheFile )
     .tap( function( isExists ){
-      if( !isExists ){
-        if ( !ENABLE_NPM_FAILOVER ) {
-          res._log.cacheHit = '!!!';
-          return Promise.reject( { status: 404 });
-        }
+      if ( ENABLE_NPM_FAILOVER ) {
         res._log.cacheHit = '---';
         return fetchAndCacheMetadata( packageName, cacheFile );
+      }
+      if( !isExists ){
+        res._log.cacheHit = '!!!';
+        return Promise.reject( { status: 404 });
       }
     })
     .then( function( ){
@@ -87,6 +87,34 @@ app.get( '/:package/-/:tarball', function( req, res, next ){
     .then( function( ){
       res._log.cacheFile = packagePath;
       return res.sendFile( packagePath );
+    })
+    .catch( next );
+});
+
+app.get( '/:scope/:package', function( req, res, next ){
+  var scopeName = req.params.scope;
+  var packageName = req.params.package;
+  var cacheFile = [ NPM_PATH, REGISTRY_NAME, scopeName, packageName, '.cache.json' ].join( '/' );
+
+  return fileExists( cacheFile )
+    .tap( function( isExists ){
+      if ( ENABLE_NPM_FAILOVER ) {
+        res._log.cacheHit = '---';
+        return fetchAndCacheMetadata( packageName, cacheFile, scopeName );
+      }
+      if( !isExists ){
+        res._log.cacheHit = '!!!';
+        return Promise.reject( { status: 404 });
+      }
+    })
+    .then( function( ){
+      res._log.cacheFile = cacheFile;
+      return readFile( cacheFile, 'utf-8' );
+    })
+    .then( function( cachedData ){
+      cachedData = JSON.parse( cachedData );
+      patchData( REGISTRY_NAME, packageName, cachedData );
+      return res.send( cachedData );
     })
     .catch( next );
 });

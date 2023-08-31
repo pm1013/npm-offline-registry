@@ -74,9 +74,13 @@ function encodePackageName( packageName ){
   return encodeURIComponent(packageName).replace(/^%40/, '@');
 }
 
-exports.fetchAndCacheMetadata = function ( packageName, cacheFile ){
+exports.fetchAndCacheMetadata = function ( packageName, cacheFile, scopeName ){
   var packageCacheDir = path.dirname( cacheFile );
   packageName = encodePackageName( packageName );
+  if (scopeName) {
+    packageName = scopeName + '/' + packageName;
+  }
+
   return exec( fetchAndCacheMetadataCmd, {
     packageCacheDir: packageCacheDir,
     REGISTRY_NAME: REGISTRY_NAME,
