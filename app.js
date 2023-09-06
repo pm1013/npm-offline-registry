@@ -98,6 +98,7 @@ app.get( '/:package/-/:tarball', function( req, res, next ){
 app.get( '/:scope/:package', function( req, res, next ){
   var scopeName = req.params.scope;
   var packageName = req.params.package;
+  var fullPackageName = [ scopeName, packageName ].join( '/' );
   var cacheFile = [ NPM_PATH, REGISTRY_NAME, scopeName, packageName, '.cache.json' ].join( '/' );
 
   return fileExists( cacheFile )
@@ -117,7 +118,7 @@ app.get( '/:scope/:package', function( req, res, next ){
     })
     .then( function( cachedData ){
       cachedData = JSON.parse( cachedData );
-      patchData( REGISTRY_NAME, packageName, cachedData );
+      patchData( REGISTRY_NAME, fullPackageName, cachedData );
       return res.send( cachedData );
     })
     .catch( next );
